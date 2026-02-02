@@ -11,6 +11,8 @@ class OSTarget(str, Enum):
     WINDOWS = "windows"
     LINUX   = "linux"
     MACOS   = "macos"
+    ANDROID   = "android"
+    IOS   = "ios"
 
     # This allows: str(OSTarget.WINDOWS) -> "windows"
     def __str__(self):
