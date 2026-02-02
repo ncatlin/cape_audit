@@ -11,18 +11,16 @@ By executing the same sample with the same parameters, we can narrow down issues
 ```python
     
 class CapeDynamicTest(CapeDynamicTestBase):
-    def __init__(self):
-        self.metadata = {
-          "Name": "api_tracing_1",
-          "Description": "Tests API monitoring. Runs a series of Windows API calls including file, registry, network and synchronisation.",
-          "Payload Notes": "A single statically linked 64-bit PE binary, tested on Windows 10.",
-          "Result Notes": "todo",
-          "Zip Password": None,
-          "Timeout": 120,
-          "Targets": [ "windows" ],
-          "Package": "exe",
-          "Task Config":{
-              "Timeout": 120,
+    def __init__(self, test_name, analysis_package):
+        super().__init__(test_name, analysis_package)
+        self.set_description("Tests API monitoring. " \
+        "Runs a series of Windows API calls including file, registry, network and synchronisation.")
+        self.set_payload_notes("A single statically linked 64-bit PE binary, tested on Windows 10.")
+        self.set_result_notes("These simple hooking tests are all expected to succeed on a correct CAPE setup")
+        self.set_zip_password(None)
+        self.set_task_timeout_seconds(120)
+        self.set_os_targets([OSTarget.WINDOWS])
+        self.set_task_config({
               "Route": None,
               "Tags": [ "windows", "exe" ],
               "Request Options": None,
@@ -36,8 +34,7 @@ class CapeDynamicTest(CapeDynamicTestBase):
               "Enforce Timeout": False,
               "AMSI Dumping By Monitor": False,
               "Import Reconstruction": False
-          }
-        }
+          })
         self._init_objectives()
 ```
 
