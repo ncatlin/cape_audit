@@ -35,15 +35,6 @@ class ObjectiveResult(str, Enum):
     # This allows: str(OSTarget.WINDOWS) -> "windows"
     def __str__(self):
         return self.value
-        
-
-class ReportSectionHasMatchingCheck:
-    def __init__(report_key_path: str, 
-        match_criteria: Dict[str, Any], 
-        success: str = "Passed", 
-        failure: str = "Failed"):
-        pass
-
 
 class CapeTestObjective:
     def __init__(self, objective_name :str, test, is_informational=False):
@@ -71,7 +62,6 @@ class CapeTestObjective:
         self.report = report
         self.report_string = report_string
         self.storage_path = storage_path
-
 
     def set_result_verifier(self, evaluator_object):
         if not hasattr(evaluator_object, "evaluate"):
@@ -122,6 +112,8 @@ class CapeTestObjective:
 
 class CapeDynamicTestBase:
     def __init__(self, test_name, analysis_package):
+        self._metadata = {}
+        self._objectives = []
         self.name = test_name
         self.package = analysis_package
         self.set_task_timeout_seconds(120)
@@ -131,10 +123,10 @@ class CapeDynamicTestBase:
         self.set_result_notes(None)
         self.set_os_targets([])
         self.set_task_config({})
-        self._objectives = []
-        self._metadata = {}
     
     def init_metadata(self, metadata: dict):
+        ''' Set metadata from a dict (eg: matching the format from get_metadata()) 
+        instead of setting each field individually'''
         metadata['Name'] = self.name
         metadata['Package'] = self.package
         self._metadata = metadata
@@ -145,7 +137,13 @@ class CapeDynamicTestBase:
     def get_objectives(self):
         return self._objectives
     
-    def evaluate_results(self, test_storage_directory):
+    def evaluate_results(self, test_storage_directory: str) -> None:
+        '''
+        Performs objective evaluation using the storage path of the executed
+        task. Results available from get_results()
+
+        :param test_storage_directory: The CAPE storage directory for this test containing analysis.log
+        '''
         if not os.path.exists(test_storage_directory):
             raise FileNotFoundError(f"Test storage dir {test_storage_directory} not found ")
         if not os.path.isdir(test_storage_directory):
@@ -158,14 +156,17 @@ class CapeDynamicTestBase:
         self.report_string = open(reportpath).read()
         self.report = json.loads(self.report_string)
         self.test_storage_directory= test_storage_directory
-        self.run_objective_verification()
+        self._run_objective_verification()
 
-    def run_objective_verification(self):
+    def _run_objective_verification(self):
         for objective in self._objectives:
             objective.set_test_data(self.report, self.report_string, self.test_storage_directory)
             objective.run_objective_verification()
        
     def get_results(self) -> Dict:
+        '''
+        Get a nested dictionary of evaluated objective results
+        '''
         results = {}
         for objective in self._objectives:
             results[objective.name] = objective.get_results()
@@ -203,12 +204,14 @@ class CapeDynamicTestBase:
             raise Exception("Bad config - must be json serializable")
     
     def add_objective(self, objective: CapeTestObjective):
+        '''
+        Add a top-level objective to the test
+        '''
         # This permits duplicate objective names within different levels of the tree
         # Internally we will concat the names so they are still unique
         if objective.name in {d.name for d in self._objectives}:
             raise ValueError(f"Test already has an Objective called {objective.name}")
         self._objectives.append(objective)
-
 
     def _print_objective_results(self, name, objinfo, indent = 0):
         print(f"{indent*' '}{name}: {objinfo['state']} ({objinfo['state_reason']})")
@@ -216,7 +219,9 @@ class CapeDynamicTestBase:
             self._print_objective_results(cname, cinfo, indent=indent+4)
 
     def print_test_results(self):
+        '''
+        Developer helper function for printing test results to the console
+        '''
         results = self.get_results()
         for obj,res in results.items():
             self._print_objective_results(obj, res, indent = 0)
-
