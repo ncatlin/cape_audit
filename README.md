@@ -3,7 +3,7 @@ A python module for writing CAPEv2 sandbox test evaluators
 
 This is designed to be used by developers to write tests for CAPE (and their CAPE modules), as well as to be used internally by CAPE to evaluate these tests
 
-Example:
+## Example
 
 First we create the metadata describing the test and how CAPE will execute it
 By executing the same sample with the same parameters, we can narrow down issues to the sandbox or the environment
@@ -46,7 +46,8 @@ Now we describe the test objectives. These can be linear, or relational - so if 
 ```python
     def _init_objectives(self):
 
-        # first and only top-level objective in this test
+        # Objective 1: the first and only top-level objective in this test
+
         # check if there are any behavioural listings at all in the report
         o_has_behaviour_trace = CapeTestObjective(test=self, objective_name="BehaviourInfoGenerated")
 
@@ -66,6 +67,8 @@ Now we describe the test objectives. These can be linear, or relational - so if 
 
         # Now add this objective to the test
         self.add_objective(o_has_behaviour_trace) # top level objective
+
+        # Objective 2: a child objective showing a finer-grained report.json parse
 
         # check if it caught the sleep with a specific argument
         o_sleep_hook = CapeTestObjective(test=self, objective_name="DetectSleepTime", is_informational=False)
