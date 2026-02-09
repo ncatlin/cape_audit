@@ -1,51 +1,64 @@
-# cape_test
-A python module for writing CAPEv2 sandbox test evaluators
+# cape_audit
+A python module for writing CAPEv2 sandbox test evaluators. 
 
-This is designed to be used by developers to write tests for CAPE (and their CAPE modules), as well as to be used internally by CAPE to evaluate these tests
+This is designed to be used by developers to write tests for
+* Guests and their environemnt (eg: Is traffic being redirected? Is AV destroying payloads?)
+* CAPE deployment (Is the agent installed correctly, the sandbox configuration, the installed python modules) 
+* CAPE behaviour (Does each module work, are the processors reporting the results correctly)
+* Capemon behaviour (Stealth effectiveness, malware technique detection, API hooking support) 
 
-## Example
+By using a minimal known payload with a pre-defined CAPE task configuration, we can narrow down issues to the sandbox or its configuration.
+
+The module code is executed by the CAPE sandbox server in two situations:
+* To extract test metadata when loading the test
+* To evaluate test results after a task
+
+## Usage Example
 
 First we create the metadata describing the test and how CAPE will execute it
-By executing the same sample with the same parameters, we can narrow down issues to the sandbox or the environment
 
 ```python
-    
+from typing import Any, Dict, List, Optional, Union
+from cape_audit.cape_test import CapeDynamicTestBase, CapeTestObjective, OSTarget
+from cape_audit.verifiers import VerifyReportSectionHasMatching, VerifyReportSectionHasContent
+
 class CapeDynamicTest(CapeDynamicTestBase):
-    def __init__(self, test_name, analysis_package):
-        super().__init__(test_name, analysis_package)
+    def __init__(self):
+        # only the test name and analysis package is mandatory
+        super().__init__(test_name="api_tracing_1", analysis_package="exe")
+
+        # set some messages for the user
         self.set_description("Tests API monitoring. " \
-        "Runs a series of Windows API calls including file, registry, network and synchronisation.")
+            "Runs a series of Windows API calls including file, registry, network and synchronisation.")
         self.set_payload_notes("A single statically linked 64-bit PE binary, tested on Windows 10.")
         self.set_result_notes("These simple hooking tests are all expected to succeed on a correct CAPE setup")
+
+        # optional config fields
         self.set_zip_password(None)
         self.set_task_timeout_seconds(120)
         self.set_os_targets([OSTarget.WINDOWS])
+        self.set_enforce_timeout(False)
         self.set_task_config({
               "Route": None,
-              "Tags": [ "windows", "exe" ],
-              "Request Options": None,
-              "Custom Request Params": None,
-              "Dump Interesting Buffers": False,
-              "Dump Process Memory": False,
-              "Trace Syscalls": True,
-              "Old Thread Based Loader": False,
-              "Unpacker": False,
-              "Unmonitored": False,
-              "Enforce Timeout": False,
-              "AMSI Dumping By Monitor": False,
-              "Import Reconstruction": False
+              "Tags": [ "windows","x64"],
+              "Request Options": "",
+              "Custom Request Params": None
           })
+
+        # init the test metadata
         self._init_objectives()
 ```
 
-Now we describe the test objectives. These can be linear, or relational - so if one fails then all of its descendants will not be evaluated.
+Now we describe the test objectives. These can be linear, or nested - so if one fails then all of its descendants will be skipped.
 
 ```python
     def _init_objectives(self):
-
+        #
         # Objective 1: the first and only top-level objective in this test
-
-        # check if there are any behavioural listings at all in the report
+        #
+        
+        # It's good to have a smoke test to ensure the environment is functional before testing it.
+        # Check if there are any behavioural listings at all in the report
         o_has_behaviour_trace = CapeTestObjective(test=self, objective_name="BehaviourInfoGenerated")
 
         # message for the web UI upon success
@@ -58,16 +71,18 @@ Now we describe the test objectives. These can be linear, or relational - so if 
 
         # Now add a verifier for the objective. This is an object that returns a state, 
         # message and a dictionary of child states/messages.
-        # You can roll your own, but some standard ones are provided.
+        # You can roll your own for elaborate checks, but some standard ones are provided.
         # This evaluator simply checks that report.json has a certain key with content
         o_has_behaviour_trace.set_result_verifier(VerifyReportSectionHasContent("behavior"))
 
-        # Now add this objective to the test
-        self.add_objective(o_has_behaviour_trace) # top level objective
+        # Now add this objective to the test as a top level objective
+        self.add_objective(o_has_behaviour_trace)
 
+        #
         # Objective 2: a child objective showing a finer-grained report.json parse
+        #
 
-        # check if it caught the sleep with a specific argument
+        # Check if it caught the sleep API with a specific argument
         o_sleep_hook = CapeTestObjective(test=self, objective_name="DetectSleepTime", is_informational=False)
         o_sleep_hook.set_success_msg("CAPE hooked a sleep and retrieved the correct argument")
         o_sleep_hook.set_failure_msg("There may be a hooking problem/change or the sample failed to run properly")
@@ -83,3 +98,39 @@ Now we describe the test objectives. These can be linear, or relational - so if 
         # we add it as a child of the 'has behaviour' objective
         o_has_behaviour_trace.add_child_objective(o_sleep_hook)
 ```
+
+You will also need a payload to test:
+
+```
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+int main() {
+
+	// Test 1: Can it get the argument of a sleep call
+	Sleep(1337);
+
+	return 0;
+}
+```
+These should ideally be statically linked (compiled with /MT) to reduce dependencies that might stop the test executing.
+
+You can develop and test your 'test' by tasking the payload with the desired config and fetching the CAPE task storage directory.
+
+```
+if __name__ == "__main__":
+    mytest = CapeDynamicTest()
+    # developers: change me
+    mytest.evaluate_results(r"[path_to_task_store_dir_after_payload_analysis]")
+    # helper function to see how the result will be evaluted in reality
+    mytest.print_test_results()
+```
+
+Now 
+* Build the test project
+* Upload the directory to CAPE (eg: /opt/CAPEv2/tests/audit/packages/api/api_tracing_1/test.py and payload.zip)
+* Reload tests in http[s]://your-cape-server/audit
+* Create an audit session using the test
+* Execute the test and evaluate the results
+
+See https://github.com/ncatlin/cape_dynamic_tests for template test projects

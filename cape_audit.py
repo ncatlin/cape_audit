@@ -39,7 +39,7 @@ class ObjectiveResult(str, Enum):
         return self.value
 
 class CapeTestObjective:
-    def __init__(self, objective_name :str, test, is_informational=False):
+    def __init__(self, objective_name :str, requirement :str, test, is_informational=False):
         self.name = objective_name
         self.children = []
         self.state = ObjectiveResult.UNTESTED
@@ -47,6 +47,7 @@ class CapeTestObjective:
         self.test = test
         self.result_verifier = MissingResultVerifier()
         self._is_informational = is_informational
+        self.requirement = requirement
         self._success_msg = "set_success_msg() was not called when creating the objective"
         self._failure_msg = "set_failure_msg() was not called when creating the objective"
         self.report = {'error':'report not initialised'}
@@ -92,7 +93,16 @@ class CapeTestObjective:
             for child in self.children:
                 child.set_test_data(self.report, self.report_string, self.storage_path)
                 child.run_objective_verification()
-        
+        else:
+            for child in self.children:
+                child.set_skipped("The parent objective was not met")
+
+    def set_skipped(self, reason):
+        self.state = ObjectiveResult.SKIPPED
+        self.state_reason = reason
+        for child in self.children:
+            child.set_skipped(reason)
+
     def add_child_objective(self, objective: CapeTestObjective):
         ''' Add another objective which is evaluated if
         this objective is evaluated and does not fail '''
@@ -114,7 +124,7 @@ class CapeTestObjective:
 
 class CapeDynamicTestBase:
     def __init__(self, test_name, analysis_package):
-        self._metadata = {}
+        self._metadata = {"Name": test_name, "Package":analysis_package}
         self._objectives = []
         self.name = test_name
         self.package = analysis_package
@@ -123,6 +133,7 @@ class CapeDynamicTestBase:
         self.set_zip_password(None)
         self.set_payload_notes(None)
         self.set_result_notes(None)
+        self.set_enforce_timeout(False)
         self.set_os_targets([])
         self.set_task_config({})
     
@@ -139,7 +150,7 @@ class CapeDynamicTestBase:
     def get_objectives(self):
         return self._objectives
     
-    def evaluate_results(self, test_storage_directory: str) -> None:
+    def evaluate_results(self, test_storage_directory: str) -> Dict:
         '''
         Performs objective evaluation using the storage path of the executed
         task. Results available from get_results()
@@ -159,6 +170,7 @@ class CapeDynamicTestBase:
         self.report = json.loads(self.report_string)
         self.test_storage_directory= test_storage_directory
         self._run_objective_verification()
+        return self.get_results()
 
     def _run_objective_verification(self):
         for objective in self._objectives:
@@ -191,7 +203,15 @@ class CapeDynamicTestBase:
             self._metadata["Timeout"] = int(analysis_timeout)
         except ValueError as e:
             raise ValueError("Bad Timeout Value - Must be a valid integer")
-            
+
+    def set_enforce_timeout(self, val: bool) -> None:
+        if val == True:
+            self._metadata["Enforce Timeout"] = True
+        elif val == False:
+            self._metadata["Enforce Timeout"] = False
+        else:
+            raise ValueError("Bad Enforce Timeout Value - Must be True/False")
+
     def set_os_targets(self, targets: Union[OSTarget, List[OSTarget]]) -> None:
         if isinstance(targets, OSTarget):
             self._metadata["Targets"] = [str(targets)]
@@ -201,6 +221,8 @@ class CapeDynamicTestBase:
     def set_task_config(self, task_config: Dict[str, Any]) -> None:
         try:
             json.dumps(task_config)
+            if task_config.get("Request Options",None) == None:
+                task_config = ""
             self._metadata["Task Config"] = task_config
         except Exception as e:
             raise Exception("Bad config - must be json serializable")
