@@ -7,11 +7,13 @@ This is designed to be used by developers to write tests for
 * CAPE behaviour (Does each module work, are the processors reporting the results correctly)
 * Capemon behaviour (Stealth effectiveness, malware technique detection, API hooking support) 
 
-By using a minimal known payload with a pre-defined CAPE task configuration, we can narrow down issues to the sandbox or its configuration.
+By using a minimal, known and benign payload with a pre-defined CAPE task configuration, we can narrow down issues to the sandbox or its configuration.
 
 The module code is executed by the CAPE sandbox server in two situations:
 * To extract test metadata when loading the test
 * To evaluate test results after a task
+
+ <img width="1059" height="504" alt="Image" src="https://github.com/user-attachments/assets/bd3dedec-4230-4c43-8a4e-26c7a8a85cb0" />
 
 ## Usage Example
 
@@ -115,7 +117,7 @@ int main() {
 ```
 These should ideally be statically linked (compiled with /MT) to reduce dependencies that might stop the test executing.
 
-You can develop and test your 'test' by tasking the payload with the desired config and fetching the CAPE task storage directory.
+You can develop and test your 'test' locally by tasking the payload with the desired config and fetching the CAPE task storage directory.
 
 ```
 if __name__ == "__main__":
