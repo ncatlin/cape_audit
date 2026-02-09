@@ -9,8 +9,8 @@ This is designed to be used by developers to write tests for
 
 By using a minimal, known and benign payload with a pre-defined CAPE task configuration, we can narrow down issues to the sandbox or its configuration.
 
-The module code is executed by the CAPE sandbox server in two situations:
-* To extract test metadata when loading the test
+The module (which needs to be installed in CAPE's python env) is used by the CAPE sandbox server in two situations:
+* To extract test metadata when loading a test
 * To evaluate test results after a task
 
 ## Usage Example
