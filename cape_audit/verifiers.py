@@ -1,6 +1,8 @@
 from typing import List, Union, Dict, Any, Optional
 import json
 import re
+import os
+from pathlib import Path
 
 
 class MissingResultVerifier:
@@ -9,6 +11,9 @@ class MissingResultVerifier:
 
 
 class VerifyReportSectionHasContent:
+    """
+    Assert that the CAPE report.json contains a specific section
+    """
     def __init__(
         self, 
         path: str
@@ -21,9 +26,14 @@ class VerifyReportSectionHasContent:
 
 
 class VerifyReportSectionHasMatching:
-    '''
-    Checks report.json for a dict with matching prop:value pairs
-    '''
+    """
+    Assert that the report.json contains matching prop:value pairs at a specific path
+    Keyword arguments
+
+    path -- the path in the json document eg: "behavior/processes/calls" searches for {"behaviour":{"processes":[{"calls":[...]}]}}
+    match_criteria -- eg: { "api": "OutputDebugStringA", "arguments/value": r"FLAG_1"}
+    values_are_regexes -- if true, matches the match_criteria as regular expressions. If false - exact string matches.
+    """
     def __init__(
         self, 
         path: str, 
@@ -43,7 +53,12 @@ class VerifyReportSectionHasMatching:
 
     def evaluate(self, report: Dict[str, Any], report_string: str, test_storage_directory: str) -> bool:
         """
-        Returns (bool, message) based on whether the criteria were met.
+        Returns True or False based on whether the criteria were met.
+
+        Keyword arguments
+        report -- report.json parsed as a dictionary
+        report_string -- report.json as a raw string for direct searching
+        test_storage_directory -- the path of the storage directory, for custom test evaluation
         """
         # 1. Resolve the path to get the list of items (processes or calls)
         targets = self._resolve_path(report, self.path)
@@ -110,6 +125,9 @@ class VerifyReportSectionHasMatching:
     
 
 class VerifyReportHasExactString:
+    """
+    evaluate returns true if the raw text of report.json contains a specific string
+    """
     def __init__(
         self, 
         pattern: str
@@ -117,9 +135,20 @@ class VerifyReportHasExactString:
         self.pattern = pattern
         
     def evaluate(self, report: Dict[str, Any], report_string: str, test_storage_directory: str) -> bool:
+        """
+        Returns True or False based on whether the criteria were met.
+
+        Keyword arguments
+        report -- report.json parsed as a dictionary
+        report_string -- report.json as a raw string for direct searching
+        test_storage_directory -- the path of the storage directory, for custom test evaluation
+        """
         return self.pattern in report_string
 
 class VerifyReportHasPattern:
+    """
+    evaluate returns true if the raw text of report.json matches the provided regex
+    """
     def __init__(
         self, 
         pattern: re.Pattern
@@ -127,7 +156,46 @@ class VerifyReportHasPattern:
         self.pattern = pattern  # e.g., "behavior/processes/calls"
         
     def evaluate(self, report: Dict[str, Any], report_string: str, test_storage_directory: str) -> bool:
+        """
+        Returns True or False based on whether the criteria were met.
+
+        Keyword arguments
+        report -- report.json parsed as a dictionary
+        report_string -- report.json as a raw string for direct searching
+        test_storage_directory -- the path of the storage directory, for custom test evaluation
+        """
         if self.pattern.search(report_string) != None:
             return True
         return False
 
+class VerifyFileContainsPattern:
+    """
+    evaluate returns true if the file matches the provided regex
+    Keyword arguments
+    storage_relative_path -- file in the storage directory eg: 'analysis.log', 'tlsdump/tlsdump.log'
+    pattern -- regex to match
+    binary_mode -- True if the expected file and pattern is bytes instead of text
+    """
+    def __init__(
+        self, 
+        storage_relative_path: str,
+        pattern: re.Pattern,
+        binary_mode: bool = False
+    ):
+        self.pattern = pattern  # e.g., "behavior/processes/calls"
+        self.relative_path = storage_relative_path
+        self.binary_mode = binary_mode
+        
+    def evaluate(self, report: Dict[str, Any], report_string: str, test_storage_directory: str) -> bool:
+        file_path = Path(test_storage_directory) / self.relative_path    
+        if not file_path.exists():
+            return False
+
+        if not file_path.is_file():
+            return False
+
+        mode = 'rb' if self.binary_mode else 'r'
+        with file_path.open(mode) as f:
+            data = f.read()
+        
+        return bool(self.pattern.search(data))

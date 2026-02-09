@@ -129,6 +129,7 @@ if __name__ == "__main__":
 Now 
 * Build the test project
 * Upload the directory to CAPE (eg: /opt/CAPEv2/tests/audit/packages/api/api_tracing_1/test.py and payload.zip)
+* Ensure the cape user has read and write permissions to it
 * Reload tests in http[s]://your-cape-server/audit
 * Create an audit session using the test
 * Execute the test and evaluate the results

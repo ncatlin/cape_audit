@@ -74,20 +74,15 @@ class CapeTestObjective:
     def run_objective_verification(self):
         try:
             result = self.result_verifier.evaluate(self.report, self.report_string, self.storage_path)
-            if result is True:
-                if self._is_informational:
-                    self.state = ObjectiveResult.INFO
-                else:
-                    self.state = ObjectiveResult.SUCCESS
-                self.state_reason = self._success_msg
+            self.state_reason = self._success_msg if result else self._failure_msg
+            if self._is_informational:
+                self.state = ObjectiveResult.INFO
             else:
-                self.state = ObjectiveResult.FAILURE
-                self.state_reason = self._failure_msg
+                self.state = ObjectiveResult.SUCCESS if result else ObjectiveResult.FAILURE
         except Exception as e:
             self.state = ObjectiveResult.ERROR
             self.state_reason = f"An exception was thrown during verification: {e}"
             print(traceback.format_exc())
-
             
         if self.state in [ObjectiveResult.SUCCESS, ObjectiveResult.INFO]:
             for child in self.children:

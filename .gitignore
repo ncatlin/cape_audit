@@ -3,3 +3,6 @@
 ################################################################################
 
 /.vs
+/cape_audit.zip
+/cape_audit.egg-info
+/build/lib/cape_audit
