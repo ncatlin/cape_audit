@@ -15,6 +15,21 @@ The module code is executed by the CAPE sandbox server in two situations:
 
 ## Usage Example
 
+### Prepare
+
+We need the module installed. Clone this repo and run something like:
+
+```
+python -m venv venv
+
+.\venv\Scripts\Activate.ps1
+
+# This is best for development so changes in 'cape_audit' reflect immediately
+python -m pip install .\cape_audit
+```
+
+### Test Development
+
 First we create the metadata describing the test and how CAPE will execute it
 
 ```python
