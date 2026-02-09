@@ -2,7 +2,7 @@
 A python module for writing CAPEv2 sandbox test evaluators. 
 
 This is designed to be used by developers to write tests for
-* Guests and their environemnt (eg: Is traffic being redirected? Is AV destroying payloads?)
+* Guests and their environment (eg: Is traffic being redirected? Is AV destroying payloads?)
 * CAPE deployment (Is the agent installed correctly, the sandbox configuration, the installed python modules) 
 * CAPE behaviour (Does each module work, are the processors reporting the results correctly)
 * Capemon behaviour (Stealth effectiveness, malware technique detection, API hooking support) 
