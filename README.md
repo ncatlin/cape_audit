@@ -13,8 +13,6 @@ The module code is executed by the CAPE sandbox server in two situations:
 * To extract test metadata when loading the test
 * To evaluate test results after a task
 
- <img width="1059" height="504" alt="Image" src="https://github.com/user-attachments/assets/bd3dedec-4230-4c43-8a4e-26c7a8a85cb0" />
-
 ## Usage Example
 
 First we create the metadata describing the test and how CAPE will execute it
@@ -134,5 +132,7 @@ Now
 * Reload tests in http[s]://your-cape-server/audit
 * Create an audit session using the test
 * Execute the test and evaluate the results
+
+ <img width="1059" height="504" alt="Image" src="https://github.com/user-attachments/assets/bd3dedec-4230-4c43-8a4e-26c7a8a85cb0" />
 
 See https://github.com/ncatlin/cape_dynamic_tests for template test projects
