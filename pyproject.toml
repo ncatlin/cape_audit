@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cape-audit"
+name = "cape_audit"
 version = "1.0.0"
 authors = [
   { name="Nia Catlin", email="niacatn@gmail.com" },
@@ -27,3 +27,11 @@ Homepage = "https://github.com/ncatlin/cape_audit"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["cape_audit*"]
+
+[tool.poetry]
+name = "cape_audit"
+version = "1.0.0"
+description = "Base classes for building CAPE sandbox evaluation tests"
+authors = ["Nia Catlin <niacatn@gmail.com>"]
+readme = "README.md"
+packages = [{include = "cape_audit"}]
