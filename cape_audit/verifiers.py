@@ -19,7 +19,7 @@ class VerifyReportSectionHasContent:
         self.path = path  # e.g., "behavior/processes/calls"
         
     def evaluate(self, report: Dict[str, Any], report_string: str, test_storage_directory: str) -> bool:
-        innerVerifier = VerifyReportSectionHasMatching(self.path, None)
+        innerVerifier = VerifyReportSectionHasMatching(self.path, [])
         return innerVerifier.has_content(report)
 
 

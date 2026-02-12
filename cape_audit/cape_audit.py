@@ -5,7 +5,6 @@ import json
 import logging
 import os
 from enum import Enum
-import traceback
 from .verifiers import MissingResultVerifier
 
 class OSTarget(str, Enum):
