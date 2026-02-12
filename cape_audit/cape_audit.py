@@ -2,6 +2,7 @@
 from __future__ import annotations
 from typing import List, Union, Dict, Any
 import json
+import logging
 import os
 from enum import Enum
 import traceback
@@ -81,8 +82,9 @@ class CapeTestObjective:
                 self.state = ObjectiveResult.SUCCESS if result else ObjectiveResult.FAILURE
         except Exception as e:
             self.state = ObjectiveResult.ERROR
-            self.state_reason = f"An exception was thrown during verification: {e}"
-            print(traceback.format_exc())
+            self.state_reason = f"An exception was thrown during verification: {str(e)}"
+            log = logging.getLogger(__name__)
+            log.exception("An exception was thrown during verification of test %s:%s",self.test.name, self.name)
             
         if self.state in [ObjectiveResult.SUCCESS, ObjectiveResult.INFO]:
             for child in self.children:
