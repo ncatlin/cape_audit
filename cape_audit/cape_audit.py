@@ -1,6 +1,6 @@
 
 from __future__ import annotations
-from typing import List, Union, Dict, Any, Optional
+from typing import List, Union, Dict, Any
 import json
 import os
 from enum import Enum
@@ -196,13 +196,13 @@ class CapeDynamicTestBase:
     def set_task_timeout_seconds(self, analysis_timeout: int) -> None:
         try:
             self._metadata["Timeout"] = int(analysis_timeout)
-        except ValueError as e:
+        except ValueError:
             raise ValueError("Bad Timeout Value - Must be a valid integer")
 
     def set_enforce_timeout(self, val: bool) -> None:
-        if val == True:
+        if val:
             self._metadata["Enforce Timeout"] = True
-        elif val == False:
+        elif not val:
             self._metadata["Enforce Timeout"] = False
         else:
             raise ValueError("Bad Enforce Timeout Value - Must be True/False")
@@ -216,10 +216,10 @@ class CapeDynamicTestBase:
     def set_task_config(self, task_config: Dict[str, Any]) -> None:
         try:
             json.dumps(task_config)
-            if task_config.get("Request Options",None) == None:
+            if task_config.get("Request Options",None) is None:
                 task_config = ""
             self._metadata["Task Config"] = task_config
-        except Exception as e:
+        except Exception:
             raise Exception("Bad config - must be json serializable")
     
     def add_objective(self, objective: CapeTestObjective):

@@ -1,7 +1,5 @@
-from typing import List, Union, Dict, Any, Optional
-import json
+from typing import Dict, Any
 import re
-import os
 from pathlib import Path
 
 
@@ -164,9 +162,8 @@ class VerifyReportHasPattern:
         report_string -- report.json as a raw string for direct searching
         test_storage_directory -- the path of the storage directory, for custom test evaluation
         """
-        if self.pattern.search(report_string) != None:
-            return True
-        return False
+        return self.pattern.search(report_string) is not None
+
 
 class VerifyFileContainsPattern:
     """
