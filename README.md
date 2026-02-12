@@ -105,10 +105,10 @@ Now we describe the test objectives. These can be linear, or nested - so if one 
         # a sleep call that with parameter 1337
         evaluator = VerifyReportSectionHasMatching(
             path="behavior/processes/calls",
-            match_criteria={
-                "api": "NtDelayExecution", 
-                "arguments/value": "1337"
-            })
+            match_criteria=[
+                {"api": "NtDelayExecution"}, 
+                {"arguments/value": "1337"}
+            ])
         o_sleep_hook.set_result_verifier(evaluator)
         # we add it as a child of the 'has behaviour' objective
         o_has_behaviour_trace.add_child_objective(o_sleep_hook)
