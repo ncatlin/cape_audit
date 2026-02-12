@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 import re
 from pathlib import Path
 
@@ -29,18 +29,28 @@ class VerifyReportSectionHasMatching:
     Keyword arguments
 
     path -- the path in the json document eg: "behavior/processes/calls" searches for {"behaviour":{"processes":[{"calls":[...]}]}}
-    match_criteria -- eg: { "api": "OutputDebugStringA", "arguments/value": r"FLAG_1"}
+    match_criteria -- eg: [{ "api": "OutputDebugStringA"}, {"arguments/value": r"FLAG_1"}]
     values_are_regexes -- if true, matches the match_criteria as regular expressions. If false - exact string matches.
     """
     def __init__(
         self, 
         path: str, 
-        match_criteria: Dict[str, Any] | None,
+        match_criteria: List[Dict[str, Any]] | None,
         values_are_regexes: bool = False
     ):
         self.path = path  # e.g., "behavior/processes/calls"
         self.match_criteria = match_criteria
         self.is_regexes = values_are_regexes
+
+        self.check_criteria_format()
+
+
+    def check_criteria_format(self):
+        for criterion in self.match_criteria:
+            if not isinstance(self.match_criteria, list):
+                raise TypeError(f"match_criteria must be a list, got {type(self.match_criteria).__name__}")
+            if len(criterion) != 1:
+                raise ValueError(f"Invalid criteria: {criterion}. Expected exactly one key-value pair.")
 
     def has_content(self, report) -> bool:
         targets = self._resolve_path(report, self.path)
@@ -71,12 +81,14 @@ class VerifyReportSectionHasMatching:
         match_count_target = len(self.match_criteria) 
         for target in targets:
             match_count = 0
-            for crit_path, expected_val in self.match_criteria.items():
+            for criterion in self.match_criteria:
+                expected_path, expected_value = next(iter(criterion.items()))
+
                 # For each criteria, resolve the path RELATIVE to the target
-                found_vals = self._resolve_path(target, crit_path)
+                found_vals = self._resolve_path(target, expected_path)
                 
                 # If resolve_path found the value (even inside a nested list)
-                if self._verify_value(found_vals, expected_val):
+                if self._verify_value(found_vals, expected_value):
                     match_count += 1
                     if match_count >= match_count_target:
                         return True
